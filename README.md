@@ -63,9 +63,13 @@ Edge Impulse (captura, entrenamiento, despliegue)
 Scripts para debug y pruebas
 
 ⚡ 4. Desarrollo
+
 🧩 4.1 Electrónica
+
 🔌 4.1.1 Conexión ESP32-CAM para programación (FTDI)
+
 ESP32-CAM	FTDI
+
 5V	5V
 GND	GND
 U0R	TX
@@ -80,7 +84,9 @@ SCL	GPIO 14
 SDA	GPIO 15
 VCC	5V
 GND	GND
+
 💻 4.2 Software
+
 📷 4.2.1 Inicialización de cámara ESP32-CAM
 #include "esp_camera.h"
 
