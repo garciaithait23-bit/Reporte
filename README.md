@@ -1,85 +1,87 @@
 # Reporte
-📘 Reporte Técnico del Prototipo
-1. Introducción
+🧩 1. Introducción
 
-La ESP32-CAM es un módulo económico que integra un SoC ESP32 y una cámara OV2640, diseñado para aplicaciones IoT con captura de imágenes, streaming y tareas básicas de visión en el borde. Debido a sus limitaciones de CPU, memoria y energía, las tareas complejas de detección suelen optimizarse (TinyML) o delegarse a un servidor externo.
+La ESP32-CAM es un módulo de bajo costo que integra un SoC ESP32 y una cámara OV2640, diseñado para aplicaciones IoT que requieren captura de imágenes, streaming y tareas básicas de visión en el borde.
+Debido a sus limitaciones de CPU, RAM y gestión energética, los modelos avanzados de visión suelen necesitar optimización (TinyML) o delegarse a un servidor externo.
 
-2. Objetivo
+Este prototipo combina visión artificial, visualización en display, señalización con LEDs/Buzzer y encapsulado en una carcasa 3D personalizada.
+
+🎯 2. Objetivo
 
 Desarrollar un prototipo capaz de:
 
-Identificar al menos dos clases de objetos mediante visión artificial.
+🔍 Detectar al menos dos clases de objetos mediante visión artificial (TinyML o servidor externo).
 
-Mostrar la clase detectada en un display integrado.
+🖥️ Mostrar la clase detectada en un display OLED/TFT.
 
-Activar señalización mediante LEDs y buzzer según la detección.
+🚨 Activar LEDs y buzzer según el objeto identificado.
 
-Integrar completamente la electrónica en una carcasa impresa en 3D.
+🧱 Integrar toda la electrónica en una carcasa impresa en 3D.
 
-Todo esto asegurando un funcionamiento estable y evidencias experimentales documentadas.
+🧪 Mantener un funcionamiento estable y documentado mediante evidencias experimentales.
 
-3. Materiales
+🛠️ 3. Materiales
+🔌 Electrónica
+Componente	Descripción
+ESP32-CAM	Microcontrolador con cámara OV2640
+LEDs	Naranja / Amarillo / Rojo (según clases detectadas)
+Buzzer piezoeléctrico	Señalización auditiva
+Display OLED/TFT	I2C o SPI
+Jumpers macho-hembra	Conexión
+Fuente de 5V	Alimentación
+Módulo FTDI	Programación de la ESP32-CAM
+🧱 Estructura física
 
-Electrónica
+Carcasa diseñada en CAD
 
-Módulo microcontrolador con cámara (por ejemplo ESP32-CAM)
+Impresión 3D (PLA/ABS)
 
-LEDs (al menos: Naranja, amarillo, rojo u otros según las clases)
+Sistema de sujeción interno para fijar:
 
-Buzzer piezoeléctrico
+ESP32-CAM
 
-Display (OLED o TFT, según implementación)
+Pantalla
 
-Cables tipo jumper
+LEDS y buzzer
 
-Fuente de alimentación o módulo regulador
+Canal interno para cables
 
-Estructura física
+💻 Software
 
-Carcasa impresa en 3D
+Arduino IDE
 
-Software
+Librerías:
 
-Entorno de programación 
+esp_camera
 
-Librerías para cámara, display y control de pines
+Wire
 
-Modelo de clasificación de objetos
+Adafruit_SSD1306
 
-Scripts de prueba y documentación
+Edge Impulse (captura, entrenamiento, despliegue)
 
-4. Desarrollo
-4.1 Electrónica
-4.1.1 Conexión ESP32-CAM para programación
+Scripts para debug y pruebas
+
+⚡ 4. Desarrollo
+🧩 4.1 Electrónica
+🔌 4.1.1 Conexión ESP32-CAM para programación (FTDI)
 ESP32-CAM	FTDI
-5V	        5V
-GND	        GND
-U0R	        TX
-U0T 	    RX
-IO0 a GND	Modo programación
+5V	5V
+GND	GND
+U0R	TX
+U0T	RX
+IO0 → GND	Modo programación
+🖥️ 4.1.2 Conexión del display OLED (I2C)
 
-4.1.2 Conexión del display OLED I2C
+Pines válidos en placa AI-Thinker
 
-La ESP32-CAM no tiene pines estándar, pero AI-Thinker permite:
-
-GPIO 14 → SCL
-
-GPIO 15 → SDA
-
-5V → VCC
-
-GND → GND
-
-4.2 Software
-
-4.2.1 Programación básica de la ESP32-CAM
-
-Instalar en Arduino:
-Herramientas → Placa → Gestor de tarjetas → ESP32 de Espressif Systems
-
-Seleccionar placa: AI Thinker ESP32-CAM
-
-Cargar sketch base:
+OLED	ESP32-CAM
+SCL	GPIO 14
+SDA	GPIO 15
+VCC	5V
+GND	GND
+💻 4.2 Software
+📷 4.2.1 Inicialización de cámara ESP32-CAM
 #include "esp_camera.h"
 
 // Pines AI Thinker
@@ -104,6 +106,7 @@ void startCamera() {
   camera_config_t config;
   config.ledc_channel = LEDC_CHANNEL_0;
   config.ledc_timer = LEDC_TIMER_0;
+  
   config.pin_d0 = Y2_GPIO_NUM;
   config.pin_d1 = Y3_GPIO_NUM;
   config.pin_d2 = Y4_GPIO_NUM;
@@ -112,14 +115,18 @@ void startCamera() {
   config.pin_d5 = Y7_GPIO_NUM;
   config.pin_d6 = Y8_GPIO_NUM;
   config.pin_d7 = Y9_GPIO_NUM;
+
   config.pin_xclk = XCLK_GPIO_NUM;
   config.pin_pclk = PCLK_GPIO_NUM;
   config.pin_vsync = VSYNC_GPIO_NUM;
   config.pin_href = HREF_GPIO_NUM;
+
   config.pin_sscb_sda = SIOD_GPIO_NUM;
   config.pin_sscb_scl = SIOC_GPIO_NUM;
+
   config.pin_pwdn = PWDN_GPIO_NUM;
   config.pin_reset = RESET_GPIO_NUM;
+
   config.xclk_freq_hz = 20000000;
   config.pixel_format = PIXFORMAT_JPEG;
 
@@ -137,23 +144,33 @@ void setup() {
 
 void loop() {}
 
-4.2.2 Detección de objetos
+🤖 4.2.2 Detección de objetos con Edge Impulse
+🟦 Flujo general
 
+Captura de dataset desde la cámara del ESP32-CAM vía Edge Impulse.
 
+Entrenamiento del modelo:
 
+MobileNetV2 96×96
 
+Optimización con EON Compiler
 
+Exportación Arduino Library (.zip)
+Deployment → Arduino Library
 
+Integración en ESP32-CAM:
 
+La imagen se convierte a RGB888 96×96
 
+Se ejecuta el modelo
 
+Se interpreta la clase:
 
+if (result.classification[0].value > 0.7) {
+    objetoDetectado = "Clase A";
+}
 
-
-
-4.2.3 Mostrar el objeto detectado en el display OLED
-
-Código:
+🖥️ 4.2.3 Mostrar detección en OLED
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
@@ -176,48 +193,65 @@ void mostrarObjeto(String objeto){
   display.display();
 }
 
-Llamar la función después de detección:
+// Uso:
 if(objetoDetectado == "Persona"){
   mostrarObjeto("Persona");
 }
 
-5. Resultados
+📊 5. Resultados
 
-La ESP32-CAM captura imágenes correctamente en resoluciones bajas/medias.
+📸 La ESP32-CAM captura imágenes correctamente en resoluciones bajas/medias.
 
-La detección TinyML funciona para modelos pequeños (1–3 clases).
+🤖 TinyML permite detectar 1–3 clases con buen desempeño.
 
-La detección con servidor (OpenCV) logra alta precisión y puede identificar hasta 20 clases (MobileNet-SSD).
+🖥️ Detección con servidor (OpenCV) alcanza 20 clases con alta precisión.
 
-El display OLED muestra en tiempo real el nombre del objeto detectado con una latencia menor a 200 ms.
+🧾 El OLED muestra el objeto detectado en menos de 200 ms.
 
-6. Conclusión
+🧱 La carcasa 3D brinda:
 
-El sistema cumple con éxito la captura, detección y visualización. Se comprobó que:
+Estabilidad estructural
 
-La ESP32-CAM puede procesar detección básica internamente.
+Organización del cableado
 
-La detección avanzada se logra mejor delegando a un servidor.
+Protección física
 
-El display OLED permite retroalimentación inmediata del objeto detectado.
+Mejor estética del prototipo
 
-Este sistema es ideal para aplicaciones de seguridad, automatización y reconocimiento de objetos.
+🏁 6. Conclusión
 
-7. Trabajos futuros
+El sistema integra exitosamente captura, inferencia local y visualización:
 
-Integración de YOLO-Nano optimizado para ESP32.
+✔️ La ESP32-CAM puede realizar detección básica mediante TinyML.
 
-Carcasa impresa en 3D para estabilidad.
+✔️ La detección avanzada se logra mejor con apoyo de un servidor.
 
-Enviar alertas a una app móvil por MQTT.
+✔️ El display OLED brinda retroalimentación inmediata.
 
-Añadir un zumbador para avisos sonoros.
+✔️ La carcasa 3D permite un prototipo compacto, seguro y funcional.
 
-Mejorar la velocidad de transmisión con WebSockets.
+Ideal para proyectos de seguridad, automatización y reconocimiento de objetos.
+
+🚀 7. Trabajos futuros
+
+🔧 Integrar YOLO-Nano para detección optimizada en microcontroladores.
+
+🧱 Mejorar la carcasa 3D (flujos de aire, soportes, montaje).
+
+📲 Envío de alertas por MQTT a una app móvil.
+
+🔔 Sistema de buzzer inteligente.
+
+🌐 Aumentar velocidad de transmisión con WebSockets.
 
 📚 Fuentes Bibliográficas
-[1] A. Rosebrock, Deep Learning for Computer Vision, PyImageSearch, 2019.
-[2] F. Pérez y M. Álvarez, Procesamiento Digital de Imágenes, 3ra ed., Madrid, España: Alfaomega, 2020.
-[3] A. García y L. Torres, “Introducción a los sistemas embebidos y sus aplicaciones,” Revista Iberoamericana de Ingeniería, vol. 15, no. 2, pp. 45–58, 2021.
-[4] J. R. Martínez, Fundamentos de Electrónica Digital, Barcelona, España: Marcombo, 2018.
-[5] S. López y R. Hernández, “Aplicaciones de la visión por computadora en prototipos de bajo costo,” Revista Tecnológica del Sur, vol. 12, no. 1, pp. 30–39, 2022.
+
+A. Rosebrock, Deep Learning for Computer Vision, PyImageSearch, 2019.
+
+F. Pérez & M. Álvarez, Procesamiento Digital de Imágenes, Alfaomega, 2020.
+
+A. García & L. Torres, “Sistemas embebidos y sus aplicaciones,” Revista Iberoamericana de Ingeniería, 2021.
+
+J. R. Martínez, Fundamentos de Electrónica Digital, Marcombo, 2018.
+
+S. López & R. Hernández, “Aplicaciones de visión por computadora en prototipos de bajo costo,” Revista Tecnológica del Sur, 2022.
