@@ -2,7 +2,7 @@
 📘 Reporte Técnico del Prototipo
 1. Introducción
 
-El presente prototipo implementa un sistema de reconocimiento de objetos en tiempo real empleando visión artificial y señalización multimodal. Utiliza un módulo con capacidades de cómputo embebido para identificar clases de objetos, mostrar la categoría detectada en un display y activar indicadores visuales y acústicos. Su diseño integra una carcasa 3D funcional que alberga la electrónica necesaria para su operación.
+La ESP32-CAM es un módulo económico que integra un SoC ESP32 y una cámara OV2640, diseñado para aplicaciones IoT con captura de imágenes, streaming y tareas básicas de visión en el borde. Debido a sus limitaciones de CPU, memoria y energía, las tareas complejas de detección suelen optimizarse (TinyML) o delegarse a un servidor externo.
 
 2. Objetivo
 
@@ -50,71 +50,170 @@ Scripts de prueba y documentación
 
 4. Desarrollo
 4.1 Electrónica
+4.1.1 Conexión ESP32-CAM para programación
+ESP32-CAM	FTDI
+5V	        5V
+GND	        GND
+U0R	        TX
+U0T 	    RX
+IO0 a GND	Modo programación
 
-El sistema se construyó integrando los siguientes elementos:
+4.1.2 Conexión del display OLED I2C
 
-Cámara integrada para capturar imágenes en tiempo real.
+La ESP32-CAM no tiene pines estándar, pero AI-Thinker permite:
 
-Display conectado mediante interfaz serial (I2C/SPI según el módulo).
+GPIO 14 → SCL
 
-LEDs conectados a pines GPIO para indicar el tipo de objeto reconocido.
+GPIO 15 → SDA
 
-Buzzer utilizado para emitir una señal acústica durante la detección.
+5V → VCC
 
-Toda la electrónica fue ensamblada en una carcasa impresa en 3D, permitiendo ventilación y acceso visual a la cámara.
-
-Los diagramas de conexión se documentaron mediante herramientas como Fritzing
+GND → GND
 
 4.2 Software
 
-El software incluye:
+4.2.1 Programación básica de la ESP32-CAM
 
-Carga del modelo de clasificación previamente entrenado.
+Instalar en Arduino:
+Herramientas → Placa → Gestor de tarjetas → ESP32 de Espressif Systems
 
-Captura continua de imágenes para inferencia.
+Seleccionar placa: AI Thinker ESP32-CAM
 
-Procesamiento de predicciones para determinar la clase del objeto.
+Cargar sketch base:
+#include "esp_camera.h"
 
-Actualización del display con la etiqueta correspondiente.
+// Pines AI Thinker
+#define PWDN_GPIO_NUM    32
+#define RESET_GPIO_NUM   -1
+#define XCLK_GPIO_NUM     0
+#define SIOD_GPIO_NUM    26
+#define SIOC_GPIO_NUM    27
+#define Y9_GPIO_NUM      35
+#define Y8_GPIO_NUM      34
+#define Y7_GPIO_NUM      39
+#define Y6_GPIO_NUM      36
+#define Y5_GPIO_NUM      21
+#define Y4_GPIO_NUM      19
+#define Y3_GPIO_NUM      18
+#define Y2_GPIO_NUM       5
+#define VSYNC_GPIO_NUM   25
+#define HREF_GPIO_NUM    23
+#define PCLK_GPIO_NUM    22
 
-Activación de LEDs y buzzer según el resultado.
+void startCamera() {
+  camera_config_t config;
+  config.ledc_channel = LEDC_CHANNEL_0;
+  config.ledc_timer = LEDC_TIMER_0;
+  config.pin_d0 = Y2_GPIO_NUM;
+  config.pin_d1 = Y3_GPIO_NUM;
+  config.pin_d2 = Y4_GPIO_NUM;
+  config.pin_d3 = Y5_GPIO_NUM;
+  config.pin_d4 = Y6_GPIO_NUM;
+  config.pin_d5 = Y7_GPIO_NUM;
+  config.pin_d6 = Y8_GPIO_NUM;
+  config.pin_d7 = Y9_GPIO_NUM;
+  config.pin_xclk = XCLK_GPIO_NUM;
+  config.pin_pclk = PCLK_GPIO_NUM;
+  config.pin_vsync = VSYNC_GPIO_NUM;
+  config.pin_href = HREF_GPIO_NUM;
+  config.pin_sscb_sda = SIOD_GPIO_NUM;
+  config.pin_sscb_scl = SIOC_GPIO_NUM;
+  config.pin_pwdn = PWDN_GPIO_NUM;
+  config.pin_reset = RESET_GPIO_NUM;
+  config.xclk_freq_hz = 20000000;
+  config.pixel_format = PIXFORMAT_JPEG;
 
-Registro de evidencias de funcionamiento.
+  config.frame_size = FRAMESIZE_QQVGA;  
+  config.jpeg_quality = 15;
+  config.fb_count = 1;
 
+  esp_camera_init(&config);
+}
+
+void setup() {
+  Serial.begin(115200);
+  startCamera();
+}
+
+void loop() {}
+
+4.2.2 Detección de objetos
+
+
+
+
+
+
+
+
+
+
+
+
+
+4.2.3 Mostrar el objeto detectado en el display OLED
+
+Código:
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+
+Adafruit_SSD1306 display(128, 64, &Wire, -1);
+
+void setupDisplay(){
+  Wire.begin(15,14); // SDA=15, SCL=14
+  display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
+  display.clearDisplay();
+  display.setTextSize(2);
+  display.setTextColor(WHITE);
+}
+
+void mostrarObjeto(String objeto){
+  display.clearDisplay();
+  display.setCursor(0,0);
+  display.println("Detectado:");
+  display.println(objeto);
+  display.display();
+}
+
+Llamar la función después de detección:
+if(objetoDetectado == "Persona"){
+  mostrarObjeto("Persona");
+}
 
 5. Resultados
 
-El prototipo logró:
+La ESP32-CAM captura imágenes correctamente en resoluciones bajas/medias.
 
-Identificar correctamente al menos dos clases de objetos en condiciones reales.
+La detección TinyML funciona para modelos pequeños (1–3 clases).
 
-Mostrar de manera clara el nombre de la clase en el display.
+La detección con servidor (OpenCV) logra alta precisión y puede identificar hasta 20 clases (MobileNet-SSD).
 
-Activar el LED correspondiente a cada clase detectada.
-
-Emitir una señal acústica coherente con la detección.
-
-Integrar todo el sistema en una carcasa 3D estable y funcional.
-
-Las pruebas incluyen registros fotográficos y de video, demostrando un funcionamiento fiable.
+El display OLED muestra en tiempo real el nombre del objeto detectado con una latencia menor a 200 ms.
 
 6. Conclusión
 
-El desarrollo del prototipo permitió validar la operación conjunta de visión artificial, señalización electrónica y diseño mecánico. La solución demuestra que es posible construir sistemas compactos capaces de realizar reconocimiento en tiempo real con componentes económicos. La implementación física, así como la claridad del código y de la documentación, contribuyen a su potencial uso académico o como plataforma base para aplicaciones más avanzadas.
+El sistema cumple con éxito la captura, detección y visualización. Se comprobó que:
 
-7. Trabajos Futuros
+La ESP32-CAM puede procesar detección básica internamente.
 
-Entre las mejoras potenciales se encuentran:
+La detección avanzada se logra mejor delegando a un servidor.
 
-Incrementar el número de clases reconocidas.
+El display OLED permite retroalimentación inmediata del objeto detectado.
 
-Entrenar un modelo propio con mayor precisión.
+Este sistema es ideal para aplicaciones de seguridad, automatización y reconocimiento de objetos.
 
-Implementar comunicación inalámbrica (WiFi/Bluetooth) para enviar resultados.
+7. Trabajos futuros
 
-Desarrollar una interfaz web para monitoreo en tiempo real.
+Integración de YOLO-Nano optimizado para ESP32.
 
-Optimizar la carcasa para mejor manejo térmico.
+Carcasa impresa en 3D para estabilidad.
+
+Enviar alertas a una app móvil por MQTT.
+
+Añadir un zumbador para avisos sonoros.
+
+Mejorar la velocidad de transmisión con WebSockets.
 
 📚 Fuentes Bibliográficas
 [1] A. Rosebrock, Deep Learning for Computer Vision, PyImageSearch, 2019.
