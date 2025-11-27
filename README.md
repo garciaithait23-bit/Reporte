@@ -6,6 +6,8 @@ Debido a sus limitaciones de CPU, RAM y gestión energética, los modelos avanza
 
 Este prototipo combina visión artificial, visualización en display, señalización con LEDs/Buzzer y encapsulado en una carcasa 3D personalizada.
 
+[![ESP32.jpg](https://i.postimg.cc/RFw3wf5D/ESP32.jpg)](https://postimg.cc/k6XXm25Q)
+
 🎯 2. Objetivo
 
 Desarrollar un prototipo capaz de:
@@ -30,6 +32,9 @@ Display OLED/TFT	I2C o SPI
 Jumpers macho-hembra	Conexión
 Fuente de 5V	Alimentación
 Módulo FTDI	Programación de la ESP32-CAM
+
+[![Materiales.jpg](https://i.postimg.cc/rwjhc0DH/Materiales.jpg)](https://postimg.cc/RW31L0Q1)
+
 🧱 Estructura física
 
 Carcasa diseñada en CAD
@@ -45,6 +50,8 @@ Pantalla
 LEDS y buzzer
 
 Canal interno para cables
+
+[![Carcasa.jpg](https://i.postimg.cc/sxSJQ1Kk/Carcasa.jpg)](https://postimg.cc/T5dbBdz0)
 
 💻 Software
 
@@ -223,6 +230,8 @@ Organización del cableado
 Protección física
 
 Mejor estética del prototipo
+
+[![Detecta.jpg](https://i.postimg.cc/ydHt84Vy/Detecta.jpg)](https://postimg.cc/v1030Kx4)
 
 🏁 6. Conclusión
 
